@@ -1,0 +1,37 @@
+@import "normalize.css/normalize.css";
+
+*,
+*:before,
+*:after {
+    font-family: 'Vollkorn', serif;
+    line-height: 120%;
+    font-weight: 400;
+}
+
+h1 {
+    font-size: 50px;
+    color: #282828;
+}
+
+h2 {
+    font-size: 20px;
+    color: #282828;
+}
+
+.container {
+    max-width: 960px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+@font-face {
+    font-family: "Vollkorn";
+    src: url('../fonts/Vollkorn/static/Vollkorn-Regular.ttf');
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: "Vollkorn";
+    src: url('../fonts/Vollkorn/static/Vollkorn-Bold.ttf');
+    font-weight: 700;
+}
