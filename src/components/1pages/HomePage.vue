@@ -19,12 +19,30 @@ import CryptoExchanger from '@/components/2widgets/CryptoExchanger.vue';
 </template>
 
 <style lang="scss">
+.container {
+  @media (max-width: 1000px) {
+    max-width: 650px;
+  }
+}
+
 .crypto-exchange {
+  @media (max-width: 1000px) {
+    padding: 0 40px;
+  }
+
   &__title {
      margin-bottom: 0;
+
+    @media (max-width: 1000px) {
+      font-size: 32px;
+    }
   }
   &__subtitle {
     margin-bottom: 60px;
+
+    @media (max-width: 1000px) {
+      font-size: 20px;
+    }
   }
 }
 </style>

@@ -10,6 +10,8 @@ export const useCurrenciesStore = defineStore('currencies', {
     visibleItems: 10,
     fromAmount: '',
     toAmount: '',
+    fromSearchVisibility: false,
+    toSearchVisibility: false,
   }),
   getters: {
     filteredCurrencies: (state) => {
@@ -25,10 +27,20 @@ export const useCurrenciesStore = defineStore('currencies', {
     },
   },
   actions: {
-    swapAmounts() {
-      const swapAmount = this.fromAmount;
-      this.fromAmount = this.toAmount;
-      this.toAmount = swapAmount;
+    showFromSearch() {
+      this.fromSearchVisibility = true;
+    },
+
+    showToSearch() {
+      this.toSearchVisibility = true;
+    },
+
+    hideFromSearch() {
+      this.fromSearchVisibility = false;
+    },
+
+    hideToSearch() {
+      this.toSearchVisibility = false;
     },
 
     async fetchCurrencies() {
@@ -50,7 +62,7 @@ export const useCurrenciesStore = defineStore('currencies', {
       to = to.toUpperCase();
       axios
         .get(`https://min-api.cryptocompare.com/data/price?fsym=${currency.toUpperCase()}&tsyms=${to}`)
-        .then(response => (this.currencyCost = response.data[to]));
+        .then(response => (this.currencyCost = +response.data[to] * +this.fromAmount));
     },
   },
 });
