@@ -12,6 +12,7 @@ export const useCurrenciesStore = defineStore('currencies', {
     toAmount: '',
     fromSearchVisibility: false,
     toSearchVisibility: false,
+    isValidPair: false,
   }),
   getters: {
     filteredCurrencies: (state) => {
@@ -43,7 +44,7 @@ export const useCurrenciesStore = defineStore('currencies', {
       this.toSearchVisibility = false;
     },
 
-    async fetchCurrencies() {
+    fetchCurrencies() {
       axios
         .get('https://api.changenow.io/v2/exchange/currencies?active=&flow=standard&buy=&sell=&x-changenow-api-key=c9155859d90d239f909d2906233816b26cd8cf5ede44702d422667672b58b0cd')
         .then(response => (this.currency = response.data))
@@ -53,12 +54,14 @@ export const useCurrenciesStore = defineStore('currencies', {
     async fetchMinimumExchange(from, to) {
       from = from.toLowerCase();
       to = to.toLowerCase();
-      axios
+       await axios
         .get(`https://api.changenow.io/v2/exchange/min-amount?fromCurrency=${from}&toCurrency=usdt&fromNetwork=${from}&toNetwork=${to}&flow=standard&x-changenow-api-key=c9155859d90d239f909d2906233816b26cd8cf5ede44702d422667672b58b0cd`)
-        .then(response => (this.minimalExchange = response.data.minAmount));
+        .then(response => (this.minimalExchange = response.data.minAmount))
+        .then(() => (this.isValidPair = false))
+        .catch(() => {this.isValidPair = true;});
     },
 
-    async fetchCurrencyCost(currency, to) {
+    fetchCurrencyCost(currency, to) {
       to = to.toUpperCase();
       axios
         .get(`https://min-api.cryptocompare.com/data/price?fsym=${currency.toUpperCase()}&tsyms=${to}`)

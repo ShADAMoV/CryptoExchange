@@ -4,12 +4,12 @@ import CryptoExchanger from '@/components/2widgets/CryptoExchanger.vue';
 
 <template>
   <main>
-    <div class="container">
-      <section class="crypto-exchange">
-        <h1 class="crypto-exchange__title">
+    <div class="max-w-650 lg:max-w-960 w-full mx-auto lg:p-0">
+      <section class="px-10 lg:px-0">
+        <h1 class="mb-2 text-3xl lg:text-5xl">
           Crypto Exchange
         </h1>
-        <h2 class="crypto-exchange__subtitle">
+        <h2 class="mb-16 text-xl lg:text-2xl">
           Exchange fast and easy
         </h2>
         <CryptoExchanger />
@@ -17,32 +17,3 @@ import CryptoExchanger from '@/components/2widgets/CryptoExchanger.vue';
     </div>
   </main>
 </template>
-
-<style lang="scss">
-.container {
-  @media (max-width: 1000px) {
-    max-width: 650px;
-  }
-}
-
-.crypto-exchange {
-  @media (max-width: 1000px) {
-    padding: 0 40px;
-  }
-
-  &__title {
-     margin-bottom: 0;
-
-    @media (max-width: 1000px) {
-      font-size: 32px;
-    }
-  }
-  &__subtitle {
-    margin-bottom: 60px;
-
-    @media (max-width: 1000px) {
-      font-size: 20px;
-    }
-  }
-}
-</style>

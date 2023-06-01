@@ -3,13 +3,16 @@ import { computed, onMounted, ref } from 'vue';
 import { useCurrenciesStore } from '@/stores/currencies';
 import { storeToRefs } from 'pinia';
 const currenciesStore = useCurrenciesStore();
-const { minimalExchange, currencyCost, searchCurrencies, slicedCurrencies, fromAmount, toAmount, fromSearchVisibility, toSearchVisibility } = storeToRefs(currenciesStore);
+const { minimalExchange, currencyCost, searchCurrencies, slicedCurrencies, fromAmount, toAmount, fromSearchVisibility, toSearchVisibility, isValidPair } = storeToRefs(currenciesStore);
 onMounted(() => {
   currenciesStore.fetchCurrencies();
 });
 currenciesStore.fetchCurrencyCost('btc', 'eth');
 
 const fromSearch = ref(null);
+setTimeout(() => {
+  console.log(fromSearch.value);
+});
 const toSearch = ref(null);
 const fromCurrency = ref({
   image: 'https://content-api.changenow.io/uploads/btc_d8db07f87d.svg',
@@ -31,9 +34,13 @@ function swapCurrency() {
   toCurrency.value.abbreviation = swapCurrency.abbreviation;
 }
 
-const minimalExchangeCheck = computed(() => {
+const minimalExchangeValid = computed(() => {
   return +minimalExchange.value > +fromAmount.value;
 });
+
+function minimalExchangeInput() {
+  setTimeout(() => fromAmount.value = minimalExchange.value, 300);
+}
 function calculateFromTo() {
   currenciesStore.fetchCurrencyCost(fromCurrency.value.abbreviation, toCurrency.value.abbreviation);
   setTimeout(() => toAmount.value = currencyCost.value, 100);
@@ -46,40 +53,52 @@ function cleanInput() {
 </script>
 
 <template>
-  <div class="crypto-exchanger">
+  <div class="flex items-center flex-wrap justify-end lg:justify-normal">
     <div
       v-click-outside="currenciesStore.hideFromSearch"
-      class="crypto-exchanger__wrapper"
+      class="flex items-center relative lg:max-w-452 w-full"
     >
-      <label
-        v-show="minimalExchangeCheck"
-        class="crypto-exchanger__input-warning"
+      <div
+        class="absolute -top-6"
       >
-        Minimal exchange count is <span>{{ minimalExchange }}</span>
-      </label>
+        <p
+          v-show="minimalExchangeValid && isValidPair !== true"
+          class="text-red-700 mb-2"
+        >
+          Minimal exchange amount is {{ minimalExchange }}
+        </p>
+        <p
+          v-show="isValidPair"
+          class="text-red-700"
+        >
+          This pair is disabled now
+        </p>
+      </div>
       <input
         id="leftInput"
         v-model="fromAmount"
         name="leftInput"
-        class="crypto-exchanger__input"
+        class="outer-spin box-border text-base text-gray-800 pt-2.5 pr-37.5 pb-2.5 pl-4 bg-neutral-100 border border-neutral-200 rounded-md outline-none w-full h-12"
         type="number"
+        :class="[minimalExchangeValid ? 'text-red-700' : 'text-gray-800']"
         @input="calculateFromTo"
       >
       <div
-        class="crypto-exchanger__select"
+        class="absolute flex w-32 items-center right-2.5 cursor-pointer"
         @click="currenciesStore.showFromSearch()"
       >
-        <div class="crypto-exchanger__separator" />
-        <div class="crypto-exchanger__icon">
+        <div class="w-0.5 h-8 bg-neutral-200 mr-6 select-none" />
+        <div class="w-5 h-5 mr-4 select-none">
           <img
+            class="w-full h-full"
             :src="fromCurrency.image"
             alt="Icon"
           >
         </div>
-        <div class="crypto-exchanger__abbreviation">
+        <div class="uppercase select-none text-base text-slate-800 mr-6">
           {{ fromCurrency.abbreviation }}
         </div>
-        <div class="crypto-exchanger__arrow">
+        <div class="select-none w-4 h-4">
           <svg
             id="Layer_1"
             viewBox="0 0 128 128"
@@ -96,41 +115,42 @@ function cleanInput() {
       </div>
       <div
         v-show="fromSearchVisibility"
-        class="crypto-exchanger__search"
+        class="w-full absolute top-0 z-10"
       >
         <input
           id="fromSearch"
           ref="fromSearch"
           v-model="searchCurrencies"
           name="fromSearch"
-          class="crypto-exchanger__input"
+          class="outer-spin box-border text-base text-gray-800 pt-2.5 pr-10 pb-2.5 pl-4 bg-neutral-100 border border-neutral-200 rounded-t-md outline-none w-full h-12"
           type="text"
           placeholder="Search"
         >
         <div
-          class="clean-input"
+          class="absolute w-2.5 h-2.5 right-5 top-4 cursor-pointer"
           @click="cleanInput(); currenciesStore.hideFromSearch()"
         >
-          <div class="clean-input__line-one" />
-          <div class="clean-input__line-two" />
+          <div class="absolute right-1 w-0.5 h-3 rotate-45 bg-gray-500" />
+          <div class="absolute right-1 w-0.5 h-3 -rotate-45 bg-gray-500" />
         </div>
-        <div class="crypto-exchanger__dropdown dropdown">
+        <div class="border broder-t-0 rounded-b-md max-h-36 overflow-y-auto custom-scrollbar">
           <div
             v-for="filteredCurrency in slicedCurrencies"
             :key="filteredCurrency.id"
-            class="dropdown__item"
-            @click="fromCurrency.abbreviation = filteredCurrency.ticker; fromCurrency.image = filteredCurrency.image; currenciesStore.hideFromSearch(); calculateFromTo()"
+            class="box-border p-4 flex items-center w-full bg-neutral-100 cursor-pointer"
+            @click="minimalExchangeInput(); fromCurrency.abbreviation = filteredCurrency.ticker; fromCurrency.image = filteredCurrency.image; currenciesStore.hideFromSearch(); calculateFromTo()"
           >
-            <div class="dropdown__image">
+            <div class="w-5 h-5 mr-2.5">
               <img
+                class="w-full h-full"
                 :src="filteredCurrency.image"
                 alt="coinIcon"
               >
             </div>
-            <div class="dropdown__abbreviation">
+            <div class="uppercase text-base text-slate-800 mr-4">
               {{ filteredCurrency.ticker }}
             </div>
-            <div class="dropdown__name">
+            <div class="text-base text-gray-500">
               {{ filteredCurrency.name }}
             </div>
           </div>
@@ -139,46 +159,53 @@ function cleanInput() {
     </div>
 
     <div
-      class="swapper"
-      @click="swapCurrency(); calculateFromTo()"
+      class="flex align-center direction-col justify-center flex-wrap mt-4 mb-4 cursor-pointer select-none w-8 rotate-90 lg:rotate-0 lg:mr-3 lg:ml-3 lg:mr-0 lg:mb-0 lg:mt-0"
+      @click="minimalExchangeInput(); swapCurrency(); calculateFromTo()"
     >
-      <div class="swapper__right-arrow">
+      <div class="text-3xl leading-3 text-sky-500">
         →
       </div>
-      <div class="swapper__left-arrow">
+      <div class="text-3xl leading-3 text-sky-500">
         ←
       </div>
     </div>
 
     <div
       v-click-outside="currenciesStore.hideToSearch"
-      class="crypto-exchanger__wrapper"
+      class="flex items-center relative lg:max-w-452 w-full"
     >
+      <div
+        v-show="minimalExchangeValid"
+        class="absolute text-base text-gray-800 bg-neutral-100 w-full max-w-210 lg:max-w-xs h-10 left-3.5 top-1 flex items-center"
+      >
+        -
+      </div>
       <input
         id="rightInput"
         ref="rightInput"
         v-model="toAmount"
         name="rightInput"
-        class="crypto-exchanger__input"
+        class="outer-spin box-border text-base text-gray-800 pt-2.5 pr-37.5 pb-2.5 pl-4 bg-neutral-100 border border-neutral-200 rounded-md outline-none w-full h-12"
         type="number"
         readonly
       >
 
       <div
-        class="crypto-exchanger__select"
+        class="absolute flex w-32 items-center right-2.5 cursor-pointer"
         @click="currenciesStore.showToSearch()"
       >
-        <div class="crypto-exchanger__separator" />
-        <div class="crypto-exchanger__icon">
+        <div class="w-0.5 h-8 bg-neutral-200 mr-6 select-none" />
+        <div class="w-5 h-5 mr-4 select-none">
           <img
+            class="w-full h-full"
             :src="toCurrency.image"
             alt="Icon"
           >
         </div>
-        <div class="crypto-exchanger__abbreviation">
+        <div class="uppercase select-none text-base text-slate-800 mr-6">
           {{ toCurrency.abbreviation }}
         </div>
-        <div class="crypto-exchanger__arrow">
+        <div class="select-none w-4 h-4">
           <svg
             id="Layer_1"
             viewBox="0 0 128 128"
@@ -195,58 +222,62 @@ function cleanInput() {
       </div>
       <div
         v-show="toSearchVisibility"
-        class="crypto-exchanger__search"
+        class="w-full absolute top-0 z-10"
       >
         <input
           id="toSearch"
           ref="toSearch"
           v-model="searchCurrencies"
           name="toSearch"
-          class="crypto-exchanger__input"
+          class="outer-spin box-border text-base text-gray-800 pt-2.5 pr-10 pb-2.5 pl-4 bg-neutral-100 border border-neutral-200 rounded-t-md outline-none w-full h-12"
           type="text"
           placeholder="Search"
         >
         <div
-          class="clean-input"
+          class="absolute w-2.5 h-2.5 right-5 top-4 cursor-pointer"
           @click="cleanInput(); currenciesStore.hideToSearch()"
         >
-          <div class="clean-input__line-one" />
-          <div class="clean-input__line-two" />
+          <div class="absolute right-1 w-0.5 h-3 rotate-45 bg-gray-500" />
+          <div class="absolute right-1 w-0.5 h-3 -rotate-45 bg-gray-500" />
         </div>
-        <div class="crypto-exchanger__dropdown dropdown">
+        <div class="border broder-t-0 rounded-b-md max-h-36 overflow-y-auto custom-scrollbar">
           <div
             v-for="filteredCurrency in slicedCurrencies"
             :key="filteredCurrency.id"
-            class="dropdown__item"
-            @click="toCurrency.abbreviation = filteredCurrency.ticker; toCurrency.image = filteredCurrency.image; currenciesStore.hideToSearch(); calculateFromTo()"
+            class="box-border p-4 flex items-center w-full bg-neutral-100 cursor-pointer"
+            @click="minimalExchangeInput(); toCurrency.abbreviation = filteredCurrency.ticker; toCurrency.image = filteredCurrency.image; currenciesStore.hideToSearch(); calculateFromTo()"
           >
-            <div class="dropdown__image">
+            <div class="w-5 h-5 mr-2.5">
               <img
+                class="w-full h-full"
                 :src="filteredCurrency.image"
                 alt="coinIcon"
               >
             </div>
-            <div class="dropdown__abbreviation">
+            <div class="uppercase text-base text-slate-800 mr-4">
               {{ filteredCurrency.ticker }}
             </div>
-            <div class="dropdown__name">
+            <div class="text-base text-gray-500">
               {{ filteredCurrency.name }}
             </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="crypto-exchanger__wallet">
-      <label for="walletAddress">Your Ethereum address
+    <div class="flex items-end w-full mt-8 flex-wrap lg:flex-nowrap">
+      <label
+        for="walletAddress"
+        class="text-basic text-gray-500 max-w-720 w-full lg:mr-8 mb-4 lg:mb-0"
+      >Your Ethereum address
         <input
           id="walletAddress"
           name="walletAddress"
-          class="crypto-exchanger__input"
+          class="outer-spin box-border text-base text-gray-800 pt-2.5 pr-37.5 pb-2.5 pl-4 bg-neutral-100 border border-neutral-200 rounded-md outline-none w-full h-12"
           type="text"
         >
       </label>
       <button
-        class="crypto-exchanger__button"
+        class="text-white bg-sky-500 hover:bg-sky-700 rounded-md border-0 uppercase py-4 box-border h-12 max-w-none lg:max-w-210 w-full text-black cursor-pointer"
       >
         Exchange
       </button>
@@ -255,221 +286,15 @@ function cleanInput() {
 </template>
 
 <style lang="scss">
-
-
-.crypto-exchanger {
-  display: flex;
-  flex-wrap: wrap;
-
-  @media (max-width: 1000px) {
-    justify-content: flex-end;
-  }
-
-  &__wrapper {
-    display: flex;
-    align-items: center;
-    position: relative;
-    max-width: 440px;
-    width: 100%;
-
-    @media (max-width: 1000px) {
-      max-width: unset;
-    }
-  }
-
-  &__input-warning {
-    position: absolute;
-    top: -20px;
-    left: 0;
-
-    span {
-      color: #c10b0b;
-    }
-  }
-
-  &__select {
-    position: absolute;
-    display: flex;
-    width: 135px;
-    align-items: center;
-    right: 10px;
-    cursor: pointer;
-  }
-
-  &__separator {
-    width: 2px;
-    height: 30px;
-    background: #E3EBEF;
-    margin-right: 25px;
-    user-select: none;
-  }
-
-  &__icon {
-    width: 20px;
-    height: 20px;
-    margin-right: 15px;
-    user-select: none;
-
-    img {
-      width: 100%;
-      height: 100%;
-    }
-  }
-
-  &__abbreviation {
-    text-transform: uppercase;
-    user-select: none;
-    font-size: 16px;
-    color: #282828;
-    line-height: 100%;
-    margin-right: 25px;
-  }
-
-  &__arrow {
-    user-select: none;
-    width: 18px;
-    height: 18px;
-  }
-
-  &__input {
-    position: relative;
-    box-sizing: border-box;
-    font-weight: 400;
-    font-size: 16px;
-    color: #282828;
-    padding: 10px 150px 10px 16px;
-    background: #F6F7F8;
-    border: 1px solid #E3EBEF;
-    border-radius: 5px 5px 0 0;
-    outline:none;
-    width: 100%;
-    height: 50px;
-  }
-
-  &__input::-webkit-outer-spin-button, &__input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-
-  &__wallet {
-    display: flex;
-    align-items: flex-end;
-    width: 100%;
-    margin-top: 30px;
-
-    @media (max-width: 1000px) {
-      flex-wrap: wrap;
-    }
-
-    label {
-      font-size: 16px;
-      color: #282828;
-      max-width: 720px;
-      width: 100%;
-      margin-right: 30px;
-
-      @media (max-width: 1000px) {
-        margin-right: 0;
-        margin-bottom: 15px;
-      }
-    }
-  }
-
-  #walletAddress {
-    padding: 10px 16px;
-  }
-
-  &__button {
-
-    @media (max-width: 1000px) {
-      max-width: unset;
-    }
-
-    &:hover {
-      background-color: #0095E0;
-    }
-
-    background-color: #11B3FE;
-    border-radius: 5px;
-    border: none;
-    text-transform: uppercase;
-    padding: 0 60px;
-    box-sizing: border-box;
-    height: 50px;
-    max-width: 210px;
-    width: 100%;
-    color: #FFFFFF;
-    cursor: pointer;
-  }
-
-  &__search {
-    width: 100%;
-    position: absolute;
-    top: 0;
-    z-index: 1;
-
-    .crypto-exchanger__input {
-      padding-right: 40px;
-    }
-  }
+.outer-spin::-webkit-outer-spin-button, .outer-spin::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.crypto-exchanger__input {
+  padding-right: 40px;
 }
 
-.swapper {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  margin-right: 25px;
-  margin-left: 25px;
-  cursor: pointer;
-  user-select: none;
-  width: 30px;
-
-  @media (max-width: 1000px) {
-    transform: rotate(90deg);
-    margin: 15px 0;
-  }
-
-  .swapper__right-arrow, .swapper__left-arrow {
-    font-size: 30px;
-    line-height: 35%;
-    color: #11B3FE;
-  }
-}
-
-.clean-input {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  right: 20px;
-  top: 20px;
-  cursor: pointer;
-
-  &__line-one {
-    position: absolute;
-    right: 4px;
-    width: 2px;
-    height: 12px;
-    transform: rotate(45deg);
-    background-color: #80A2B6;
-  }
-
-  &__line-two {
-    position: absolute;
-    right: 4px;
-    width: 2px;
-    height: 12px;
-    transform: rotate(-45deg);
-    background-color: #80A2B6;
-  }
-}
-
-.dropdown {
-  border: 1px solid #E3EBEF;
-  border-top: none;
-  border-radius: 0 0 5px 5px;
-  max-height: 150px;
-  overflow-y: auto;
-
+.custom-scrollbar {
   &::-webkit-scrollbar {
     width: 10px;
     background-color: #f9f9fd;
@@ -482,39 +307,6 @@ function cleanInput() {
   &::-webkit-scrollbar-track {
     -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.2);
     background-color: #f9f9fd;
-  }
-
-  &__item {
-    box-sizing: border-box;
-    padding: 15px;
-    display: flex;
-    align-items: center;
-    width: 100%;
-    background: #F6F7F8;
-    cursor: pointer;
-  }
-
-  &__image {
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
-
-    img {
-      width: 100%;
-      height: 100%;
-    }
-  }
-
-  &__abbreviation {
-    text-transform: uppercase;
-    font-size: 16px;
-    color: #282828;
-    margin-right: 16px;
-  }
-
-  &__name {
-    font-size: 16px;
-    color: #80A2B6;
   }
 }
 </style>
